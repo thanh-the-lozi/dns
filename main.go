@@ -1,57 +1,46 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"net"
 	"strconv"
 
 	"github.com/miekg/dns"
 )
 
-var records = map[string]string{
-	"test.service.": "192.168.0.2",
+var domainToIPAddr map[string]string = map[string]string{
+	"kmin.edu.vn.":      "1.2.3.4",
+	"jameshfisher.com.": "104.198.14.52",
 }
 
-func parseQuery(m *dns.Msg) {
-	for _, q := range m.Question {
-		switch q.Qtype {
-		case dns.TypeA:
-			log.Printf("Query for %s\n", q.Name)
-			ip := records[q.Name]
-			if ip != "" {
-				rr, err := dns.NewRR(fmt.Sprintf("%s A %s", q.Name, ip))
-				if err == nil {
-					m.Answer = append(m.Answer, rr)
-				}
-			}
+type handler struct{}
+
+func (this *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	msg := dns.Msg{}
+	msg.SetReply(r)
+	switch r.Question[0].Qtype {
+	case dns.TypeA:
+		domain := msg.Question[0].Name
+		address, ok := domainToIPAddr[domain]
+		if ok {
+			msg.Answer = append(msg.Answer, &dns.A{
+				Hdr: dns.RR_Header{
+					Name:   domain,
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    60,
+				},
+				A: net.ParseIP(address),
+			})
 		}
 	}
-}
-
-func handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
-	m := new(dns.Msg)
-	m.SetReply(r)
-	m.Compress = false
-
-	switch r.Opcode {
-	case dns.OpcodeQuery:
-		parseQuery(m)
-	}
-
-	w.WriteMsg(m)
+	w.WriteMsg(&msg)
 }
 
 func main() {
-	// attach request handler func
-	dns.HandleFunc("service.", handleDnsRequest)
-
-	// start server
-	port := 5353
-	server := &dns.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
-	log.Printf("Starting at %d\n", port)
-	err := server.ListenAndServe()
-	defer server.Shutdown()
-	if err != nil {
-		log.Fatalf("Failed to start server: %s\n ", err.Error())
+	srv := &dns.Server{Addr: ":" + strconv.Itoa(53), Net: "udp"}
+	srv.Handler = &handler{}
+	if err := srv.ListenAndServe(); err != nil {
+		log.Fatalf("Failed to set udp listener %s\n", err.Error())
 	}
 }
