@@ -9,8 +9,10 @@ import (
 )
 
 var domainToIPAddr map[string]string = map[string]string{
-	"kmin.edu.vn.":      "1.2.3.4",
-	"jameshfisher.com.": "104.198.14.52",
+	"kmin.edu.vn.":  "125.2.3.41",
+	"google.com.":   "104.198.14.52",
+	"facebook.com.": "133.172.14.4",
+	"linkedin.com.": "4.1.2.3",
 }
 
 type handler struct{}
@@ -38,13 +40,14 @@ func (this *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func main() {
-	srv := &dns.Server{
+	server := &dns.Server{
 		Addr: ":" + strconv.Itoa(53),
 		Net:  "udp",
 	}
 
-	srv.Handler = &handler{}
-	if err := srv.ListenAndServe(); err != nil {
+	server.Handler = &handler{}
+	defer server.Shutdown()
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to set udp listener %s\n", err.Error())
 	}
 }
