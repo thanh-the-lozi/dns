@@ -9,10 +9,10 @@ import (
 )
 
 var domainToIPAddr map[string]string = map[string]string{
-	"kmin.edu.vn.":  "125.2.3.41",
-	"google.com.":   "104.198.14.52",
-	"facebook.com.": "133.172.14.4",
-	"linkedin.com.": "4.1.2.3",
+	"google.com.":   "172.217.17.110",
+	"facebook.com.": "157.240.195.35",
+	"linkedin.com.": "108.174.10.10",
+	"kmin.edu.vn.":  "125.212.221.74",
 }
 
 type handler struct{}
